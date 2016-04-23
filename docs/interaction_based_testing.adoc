@@ -760,73 +760,14 @@ def subscriber = Stub(Subscriber) {
 
 (Think twice before using this feature. It might be better to change the design of the code under specification.)
 
-A _spy_ is created with the `MockingApi.Spy` factory method:
-
-[source,groovy]
-----
-def subscriber = Spy(SubscriberImpl, constructorArgs: ["Fred"])
-----
-
-A spy is always based on a real object. Hence you must provide a class type rather
-than an interface type, along with any constructor arguments for the type.
-If no constructor arguments are provided, the type's default constructor will be used.
-
-Method calls on a spy are automatically delegated to the real object. Likewise, values
-returned from the real object's methods are passed back to the caller via the spy.
-
-After creating a spy, you can listen in on the conversation between the caller and the real object underlying the spy:
-
-[source,groovy]
-----
-1 * subscriber.receive(_)
-----
-
-Apart from making sure that `receive` gets called exactly once,
-the conversation between the publisher and the `SubscriberImpl` instance underlying the spy remains unaltered.
-
-When stubbing a method on a spy, the real method no longer gets called:
-
-[source,groovy]
-----
-subscriber.receive(_) >> "ok"
-----
-
-Instead of calling `SubscriberImpl.receive`, the `receive` method will now simply return `"ok"`.
-
-Sometimes, it is desirable to both execute some code _and_ delegate to the real method:
-
-[source,groovy]
-----
-subscriber.receive(_) >> { String message -> callRealMethod(); message.size() > 3 ? "ok" : "fail" }
-----
-
-Here we use `callRealMethod()` to delegate the method invocation to the real object.
-Note that we don't have to pass the `message` argument along; this is taken care of automatically. `callRealMethod()`
-returns the real invocation's result, but in this example we opted to return our own result instead.
-If we had wanted to pass a different message to the real method, we could have used `callRealMethodWithArgs("changed message")`.
+_See official documentation for more information._
 
 [[PartialMocks]]
 === Partial Mocks
 
 (Think twice before using this feature. It might be better to change the design of the code under specification.)
 
-Spies can also be used as partial mocks:
-
-[source,groovy]
-----
-// this is now the object under specification, not a collaborator
-def persister = Spy(MessagePersister) {
-  // stub a call on the same object
-  isPersistable(_) >> true
-}
-
-when:
-persister.receive("msg")
-
-then:
-// demand a call on the same object
-1 * persister.persist("msg")
-----
+_See official documentation for more information._
 
 [[GroovyMocks]]
 == Groovy Mocks (New in 0.7)
@@ -835,168 +776,13 @@ So far, all the mocking features we have seen work the same no matter if the cal
 By leveraging Groovy's dynamic capabilities, Groovy mocks offer some additional features specifically for testing Groovy code.
 They are created with the `MockingApi.GroovyMock()`, `MockingApi.GroovyStub()`, and `MockingApi.GroovySpy()` factory methods.
 
-TIP: When Should Groovy Mocks be Favored over Regular Mocks?
-Groovy mocks should be used when the code under specification is written in Groovy _and_ some of the unique Groovy
-mock features are needed. When called from Java code, Groovy mocks will behave like regular mocks. Note that it
-isn't necessary to use a Groovy mock merely because the code under specification and/or mocked type is written
-in Groovy. Unless you have a concrete reason to use a Groovy mock, prefer a regular mock.
-
-=== Mocking Dynamic Methods
-
-All Groovy mocks implement the `GroovyObject` interface. They support the mocking and stubbing of
-dynamic methods as if they were physically declared methods:
-
-[source,groovy]
-----
-def subscriber = GroovyMock(Subscriber)
-
-1 * subscriber.someDynamicMethod("hello")
-----
-
-[[MockingAllInstancesOfAType]]
-=== Mocking All Instances of a Type
-
-(Think twice before using this feature. It might be better to change the design of the code under specification.)
-
-Usually, Groovy mocks need to be injected into the code under specification just like regular mocks.
-However, when a Groovy mock is created as _global_, it automagically replaces all real instances
-of the mocked type for the duration of the feature method:footnote:[You may know this behavior from Groovy's
-http://docs.groovy-lang.org/docs/groovy-2.4.1/html/gapi/groovy/mock/interceptor/MockFor.html[MockFor] and
-http://docs.groovy-lang.org/docs/groovy-2.4.1/html/gapi/groovy/mock/interceptor/StubFor.html[StubFor] facilities.]
-
-[source,groovy]
-----
-def publisher = new Publisher()
-publisher << new RealSubscriber() << new RealSubscriber()
-
-def anySubscriber = GroovyMock(RealSubscriber, global: true)
-
-when:
-publisher.publish("message")
-
-then:
-2 * anySubscriber.receive("message")
-----
-
-Here, we set up the publisher with two instances of a real subscriber implementation.
-Then we create a global mock of the _same_ type. This reroutes all method calls on the
-real subscribers to the mock object. The mock object's instance isn't ever passed to the publisher;
-it is only used to describe the interaction.
-
-NOTE: A global mock can only be created for a class type. It effectively replaces
-all instances of that type for the duration of the feature method.
-
-Since global mocks have a somewhat, well, global effect, it's often convenient
-to use them together with `GroovySpy`. This leads to the real code getting
-executed _unless_ an interaction matches, allowing you to selectively listen
-in on objects and change their behavior just where needed.
-
-.How Are Global Groovy Mocks Implemented?
-****
-Global Groovy mocks get their super powers from Groovy meta-programming. To be more precise,
-every globally mocked type is assigned a custom meta class for the duration of the feature method.
-Since a global Groovy mock is still based on a CGLIB proxy, it will retain its general mocking capabilities
-(but not its super powers) when called from Java code.
-****
-
-[[MockingConstructors]]
-=== Mocking Constructors
-
-(Think twice before using this feature. It might be better to change the design of the code under specification.)
-
-Global mocks support mocking of constructors:
-
-[source,groovy]
-----
-def anySubscriber = GroovySpy(RealSubscriber, global: true)
-
-1 * new RealSubscriber("Fred")
-----
-
-Since we are using a spy, the object returned from the constructor call remains unchanged.
-To change which object gets constructed, we can stub the constructor:
-
-[source,groovy]
-----
-new RealSubscriber("Fred") >> new RealSubscriber("Barney")
-----
-
-Now, whenever some code tries to construct a subscriber named Fred, we'll construct
-a subscriber named Barney instead.
-
-[MockingStaticMethods]
-=== Mocking Static Methods
-
-(Think twice before using this feature. It might be better to change the design of the code under specification.)
-
-Global mocks support mocking and stubbing of static methods:
-
-[source,groovy]
-----
-def anySubscriber = GroovySpy(RealSubscriber, global: true)
-
-1 * RealSubscriber.someStaticMethod("hello") >> 42
-----
-
-The same works for dynamic static methods.
-
-When a global mock is used solely for mocking constructors and static methods,
-the mock's instance isn't really needed. In such a case one can just write:
-
-[source,groovy]
-----
-GroovySpy(RealSubscriber, global: true)
-----
+_See official documentation for more information._
 
 == Advanced Features (New in 0.7)
 
 Most of the time you shouldn't need these features. But if you do, you'll be glad to have them.
 
-[[ALaCarteMocks]]
-=== A la Carte Mocks
-
-At the end of the day, the `Mock()`, `Stub()`, and `Spy()` factory methods are just canned ways to
-create mock objects with a certain configuration. If you want more fine-grained control over a mock's configuration,
-have a look at the `org.spockframework.mock.IMockConfiguration` interface. All properties of this interface
-footnote:[Because mock configurations are immutable, the interface contains just the properties' getters.]
-can be passed as named arguments to the `Mock()` method. For example:
-
-[source,groovy]
-----
-def person = Mock(name: "Fred", type: Person, defaultResponse: ZeroOrNullResponse, verified: false)
-----
-
-Here, we create a mock whose default return values match those of a `Mock()`, but whose invocations aren't
-verified (as for a `Stub()`). Instead of passing `ZeroOrNullResponse`, we could have supplied our own custom
-`org.spockframework.mock.IDefaultResponse` for responding to unexpected method invocations.
-
-[[DetectingMockObjects]]
-=== Detecting Mock Objects
-
-To find out whether a particular object is a Spock mock object, use a `org.spockframework.mock.MockDetector`:
-
-[source,groovy]
-----
-def detector = new MockDetector()
-def list1 = []
-def list2 = Mock(List)
-
-expect:
-!detector.isMock(list1)
-detector.isMock(list2)
-----
-
-A detector can also be used to get more information about a mock object:
-
-[source,groovy]
-----
-def mock = detector.asMock(list2)
-
-expect:
-mock.name == "list2"
-mock.type == List
-mock.nature == MockNature.MOCK
-----
+_See official documentation for more information._
 
 == Further Reading
 
