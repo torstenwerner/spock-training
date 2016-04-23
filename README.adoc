@@ -1,0 +1,4 @@
+= Simple Showcase for the Spock Test Framework
+
+The documentation files in directory docs are modified copies of the official spock documentation. The original
+files can be found at https://github.com/spockframework/spock .

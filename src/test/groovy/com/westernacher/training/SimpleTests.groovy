@@ -4,6 +4,8 @@ import spock.lang.Specification
 
 class SimpleTests extends Specification {
     int add(int a, int b) {
+        // return 0;
+        // return a;
         return a + b;
     }
 
