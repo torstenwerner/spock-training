@@ -2,3 +2,6 @@
 
 The documentation files in directory docs are modified copies of the official spock documentation. The original
 files can be found at https://github.com/spockframework/spock .
+
+Build image:https://snap-ci.com/torstenwerner/spock-training/branch/master/build_image[status]
+at link:https://snap-ci.com/torstenwerner/spock-training/branch/master[Snap CI]
