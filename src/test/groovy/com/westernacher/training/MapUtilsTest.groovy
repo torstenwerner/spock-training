@@ -5,10 +5,11 @@ import spock.lang.Specification
 import static com.westernacher.training.MapUtils.mapUtils
 
 class MapUtilsTest extends Specification {
-    def difference() {
+    def 'test difference() with individual expressions'() {
         expect:
-        mapUtils.difference([:], [:]) == [:]
         mapUtils.difference([a: 'before'], [:]) == [a: 'before -> null']
+        mapUtils.difference([:], [:]) == [:]
+        mapUtils.difference(null, null) == [:]
 
         when:
         def before = [a: 'before']
@@ -28,5 +29,18 @@ class MapUtilsTest extends Specification {
         ]
         // 'a human readable representation'
         [a: 'before', b: 'after'].toString() == '[a:before, b:after]'
+    }
+
+    def 'test difference() in a data driven way'() {
+        expect:
+        mapUtils.difference(before, after) == result
+
+        where:
+        before        | after         || result
+        [:]           | [:]           || [:]
+        [a: 'before'] | [:]           || [a: 'before -> null']
+        [:]           | [a: 'after']  || [a: 'null -> after']
+        [a: 'before'] | [a: 'after']  || [a: 'before -> after']
+        [a: 'before'] | [a: 'before'] || [:]
     }
 }

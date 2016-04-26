@@ -1,5 +1,6 @@
 package com.westernacher.training;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -11,7 +12,14 @@ public enum MapUtils {
      * calculates a difference between 2 maps which is suitable for logging
      */
     public <K, V> Map<String, String> difference(Map<K, V> before, Map<K, V> after) {
-        final Map<String, String> diff = new HashMap<String, String>();
+        if (before == null) {
+            before = Collections.emptyMap();
+        }
+        if (after == null) {
+            after = Collections.emptyMap();
+        }
+
+        final Map<String, String> diff = new HashMap<>();
 
         for (Map.Entry<K, V> entry : before.entrySet()) {
             final K key = entry.getKey();

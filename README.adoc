@@ -5,3 +5,5 @@ files can be found at https://github.com/spockframework/spock .
 
 Build image:https://snap-ci.com/torstenwerner/spock-training/branch/master/build_image[status]
 at link:https://snap-ci.com/torstenwerner/spock-training/branch/master[Snap CI]
+
+The HTML documentation can be created with ```./gradlew asciidoctor``` in the directory ```build/asciidoc/html5```.
